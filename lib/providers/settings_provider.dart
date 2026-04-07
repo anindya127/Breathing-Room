@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
 import '../models/user_settings.dart';
 
 final settingsProvider =
@@ -16,18 +17,18 @@ class SettingsNotifier extends Notifier<UserSettings> {
   static const _keyReductionDays = 'reduction_days';
   static const _keyCoachStart = 'coach_start_date';
   static const _keyThemeMode = 'theme_mode';
+  static const _keyPackRemaining = 'pack_remaining';
+  static const _keyTotalPacks = 'total_packs';
+
+  SharedPreferences get _prefs => ref.read(sharedPrefsProvider);
 
   @override
   UserSettings build() {
-    _loadFromPrefs();
-    return const UserSettings();
-  }
-
-  Future<void> _loadFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
+    // Synchronous load — prefs are pre-loaded in main()
+    final prefs = _prefs;
     final coachStartMs = prefs.getInt(_keyCoachStart);
 
-    state = UserSettings(
+    return UserSettings(
       packCost: prefs.getDouble(_keyPackCost) ?? 0.0,
       cigarettesPerPack: prefs.getInt(_keyCigsPerPack) ?? 20,
       currency: prefs.getString(_keyCurrency) ?? 'USD',
@@ -44,11 +45,13 @@ class SettingsNotifier extends Notifier<UserSettings> {
       themeMode: AppThemeMode.values.byName(
         prefs.getString(_keyThemeMode) ?? 'system',
       ),
+      packRemaining: prefs.getInt(_keyPackRemaining) ?? 0,
+      totalPacks: prefs.getInt(_keyTotalPacks) ?? 0,
     );
   }
 
   Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = _prefs;
     await prefs.setDouble(_keyPackCost, state.packCost);
     await prefs.setInt(_keyCigsPerPack, state.cigarettesPerPack);
     await prefs.setString(_keyCurrency, state.currency);
@@ -62,6 +65,8 @@ class SettingsNotifier extends Notifier<UserSettings> {
           _keyCoachStart, state.coachStartDate!.millisecondsSinceEpoch);
     }
     await prefs.setString(_keyThemeMode, state.themeMode.name);
+    await prefs.setInt(_keyPackRemaining, state.packRemaining);
+    await prefs.setInt(_keyTotalPacks, state.totalPacks);
   }
 
   Future<void> updateSettings({
@@ -75,6 +80,8 @@ class SettingsNotifier extends Notifier<UserSettings> {
     int? reductionDays,
     DateTime? coachStartDate,
     AppThemeMode? themeMode,
+    int? packRemaining,
+    int? totalPacks,
   }) async {
     state = state.copyWith(
       packCost: packCost,
@@ -87,6 +94,8 @@ class SettingsNotifier extends Notifier<UserSettings> {
       reductionDays: reductionDays,
       coachStartDate: coachStartDate,
       themeMode: themeMode,
+      packRemaining: packRemaining,
+      totalPacks: totalPacks,
     );
     await _save();
   }
@@ -110,6 +119,32 @@ class SettingsNotifier extends Notifier<UserSettings> {
       reductionAmount: reductionAmount,
       reductionDays: reductionDays,
       coachStartDate: mode == TrackingMode.coach ? DateTime.now() : null,
+      packRemaining: cigarettesPerPack, // First pack starts full
+      totalPacks: 1,
+    );
+    await _save();
+  }
+
+  /// Use one cigarette from the current pack.
+  Future<void> useOneCigarette() async {
+    final remaining = state.packRemaining;
+    if (remaining > 0) {
+      state = state.copyWith(packRemaining: remaining - 1);
+      await _save();
+    }
+  }
+
+  /// Restore one cigarette to the pack (on undo).
+  Future<void> restoreOneCigarette() async {
+    state = state.copyWith(packRemaining: state.packRemaining + 1);
+    await _save();
+  }
+
+  /// Add a new pack.
+  Future<void> addNewPack() async {
+    state = state.copyWith(
+      packRemaining: state.packRemaining + state.cigarettesPerPack,
+      totalPacks: state.totalPacks + 1,
     );
     await _save();
   }

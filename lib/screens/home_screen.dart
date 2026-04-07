@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../models/user_settings.dart';
+import '../providers/analytics_provider.dart';
 import '../providers/coach_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/smoke_provider.dart';
@@ -47,7 +49,7 @@ class HomeScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Mode badge
+            // Mode badge + last smoke time
             Chip(
               avatar: Icon(
                 isCoach ? Icons.trending_down : Icons.touch_app,
@@ -55,7 +57,18 @@ class HomeScreen extends ConsumerWidget {
               ),
               label: Text(settings.mode.label),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            Builder(builder: (context) {
+              final lastSmoke = ref.watch(lastSmokeTimeProvider).value;
+              if (lastSmoke == null) return const SizedBox.shrink();
+              return Text(
+                'Last smoke: ${DateFormat('h:mm a').format(lastSmoke)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              );
+            }),
+            const SizedBox(height: 16),
 
             // Today's count card
             AnimatedContainer(
@@ -263,7 +276,65 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 16),
+
+            // Pack status card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.inventory_2,
+                        color: settings.isPackEmpty
+                            ? scheme.error
+                            : scheme.primary,
+                        size: 28),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Current Pack',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            )),
+                        Text(
+                          settings.isPackEmpty
+                              ? 'Empty'
+                              : '${settings.packRemaining} left',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: settings.isPackEmpty
+                                ? scheme.error
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    FilledButton.tonalIcon(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(settingsProvider.notifier).addNewPack();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'New pack added (${settings.cigarettesPerPack} cigs)'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Pack'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
 
             // Undo button
             if (todayCount > 0)
@@ -290,7 +361,32 @@ class HomeScreen extends ConsumerWidget {
             // Smoke button with animation
             SmokeButton(
               onPressed: () {
-                ref.read(todayEntriesProvider.notifier).logSmoke();
+                if (settings.isPackEmpty) {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Pack is empty'),
+                      content: const Text(
+                          'Your current pack is empty. Add a new pack to continue tracking.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () {
+                            ref.read(settingsProvider.notifier).addNewPack();
+                            Navigator.pop(ctx);
+                            ref.read(todayEntriesProvider.notifier).logSmoke();
+                          },
+                          child: const Text('Add Pack & Log'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  ref.read(todayEntriesProvider.notifier).logSmoke();
+                }
               },
             ),
             const SizedBox(height: 32),

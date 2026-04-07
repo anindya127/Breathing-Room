@@ -22,6 +22,8 @@ class TodayEntriesNotifier extends AsyncNotifier<List<SmokeEntry>> {
       cost: settings.costPerCigarette,
     );
     await DatabaseService.insertEntry(entry);
+    // Deduct one cigarette from the current pack
+    await ref.read(settingsProvider.notifier).useOneCigarette();
     state = AsyncData(await DatabaseService.getEntriesForDay(DateTime.now()));
   }
 
@@ -29,6 +31,8 @@ class TodayEntriesNotifier extends AsyncNotifier<List<SmokeEntry>> {
     final entries = state.value;
     if (entries == null || entries.isEmpty) return;
     await DatabaseService.deleteEntry(entries.first.id!);
+    // Restore cigarette back to pack
+    await ref.read(settingsProvider.notifier).restoreOneCigarette();
     state = AsyncData(await DatabaseService.getEntriesForDay(DateTime.now()));
   }
 

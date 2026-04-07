@@ -106,6 +106,43 @@ final totalSavedProvider = Provider<double>((ref) {
   return saved > 0 ? saved : 0.0;
 });
 
+/// Duration since last cigarette (smoke-free time), based on actual DB data.
+final smokeFreeTimeProvider = FutureProvider<Duration>((ref) async {
+  ref.watch(todayEntriesProvider);
+
+  final now = DateTime.now();
+  final farPast = DateTime(2020);
+  final tomorrow =
+      DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+  final entries = await DatabaseService.getEntriesInRange(farPast, tomorrow);
+
+  if (entries.isEmpty) {
+    // No smokes ever — use coach start date or setup date
+    final settings = ref.read(settingsProvider);
+    final start = settings.coachStartDate;
+    if (start != null) return now.difference(start);
+    return Duration.zero;
+  }
+
+  // Entries are sorted ASC, last entry is the most recent smoke
+  final lastSmoke = entries.last.timestamp;
+  return now.difference(lastSmoke);
+});
+
+/// Timestamp of the last cigarette.
+final lastSmokeTimeProvider = FutureProvider<DateTime?>((ref) async {
+  ref.watch(todayEntriesProvider);
+
+  final now = DateTime.now();
+  final farPast = DateTime(2020);
+  final tomorrow =
+      DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+  final entries = await DatabaseService.getEntriesInRange(farPast, tomorrow);
+
+  if (entries.isEmpty) return null;
+  return entries.last.timestamp;
+});
+
 /// All-time total cigarettes smoked.
 final totalSmokesProvider = FutureProvider<int>((ref) async {
   ref.watch(todayEntriesProvider);

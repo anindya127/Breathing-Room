@@ -12,6 +12,10 @@ class UserSettings {
   final DateTime? coachStartDate; // when coach mode began
   final AppThemeMode themeMode;
 
+  // Pack tracking
+  final int packRemaining; // cigarettes left in current pack
+  final int totalPacks; // total packs purchased
+
   const UserSettings({
     this.packCost = 0.0,
     this.cigarettesPerPack = 20,
@@ -23,7 +27,11 @@ class UserSettings {
     this.reductionDays = 3,
     this.coachStartDate,
     this.themeMode = AppThemeMode.system,
+    this.packRemaining = 0,
+    this.totalPacks = 0,
   });
+
+  bool get isPackEmpty => packRemaining <= 0;
 
   double get costPerCigarette =>
       cigarettesPerPack > 0 ? packCost / cigarettesPerPack : 0.0;
@@ -39,6 +47,8 @@ class UserSettings {
     int? reductionDays,
     DateTime? coachStartDate,
     AppThemeMode? themeMode,
+    int? packRemaining,
+    int? totalPacks,
   }) {
     return UserSettings(
       packCost: packCost ?? this.packCost,
@@ -51,6 +61,8 @@ class UserSettings {
       reductionDays: reductionDays ?? this.reductionDays,
       coachStartDate: coachStartDate ?? this.coachStartDate,
       themeMode: themeMode ?? this.themeMode,
+      packRemaining: packRemaining ?? this.packRemaining,
+      totalPacks: totalPacks ?? this.totalPacks,
     );
   }
 }
