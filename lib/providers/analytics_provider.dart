@@ -70,6 +70,34 @@ final todayHourlyProvider = Provider<Map<int, int>>((ref) {
   return hourly;
 });
 
+/// Weekly money spent per day: index 0 = Monday, 6 = Sunday.
+final weeklySpentProvider = Provider<List<double>>((ref) {
+  final entries = ref.watch(weeklyEntriesProvider).value ?? [];
+  final spent = List.filled(7, 0.0);
+  for (final e in entries) {
+    final dayIndex = e.timestamp.weekday - 1;
+    spent[dayIndex] += e.cost;
+  }
+  return spent;
+});
+
+/// Monthly money spent per day: index 0 = 29 days ago, index 29 = today.
+final monthlySpentProvider = Provider<List<double>>((ref) {
+  final entries = ref.watch(monthlyEntriesProvider).value ?? [];
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final spent = List.filled(30, 0.0);
+  for (final e in entries) {
+    final entryDay =
+        DateTime(e.timestamp.year, e.timestamp.month, e.timestamp.day);
+    final daysAgo = today.difference(entryDay).inDays;
+    if (daysAgo >= 0 && daysAgo < 30) {
+      spent[29 - daysAgo] += e.cost;
+    }
+  }
+  return spent;
+});
+
 /// All-time total money spent.
 final totalSpentProvider = FutureProvider<double>((ref) async {
   ref.watch(todayEntriesProvider);

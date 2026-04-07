@@ -2,7 +2,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../models/user_settings.dart';
 import '../providers/analytics_provider.dart';
+import '../providers/settings_provider.dart';
+import '../providers/smoke_provider.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -88,9 +91,24 @@ class _DailyView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('When you smoked today',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('When you smoked today',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Builder(builder: (context) {
+                final spent = ref.watch(todaySpentProvider);
+                final sym = currencySymbol(
+                    ref.watch(settingsProvider).currency);
+                return Text('$sym${spent.toStringAsFixed(2)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.error,
+                    ));
+              }),
+            ],
+          ),
           const SizedBox(height: 4),
           Text('Identify your trigger times',
               style: theme.textTheme.bodySmall
@@ -193,18 +211,31 @@ class _WeeklyView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final counts = ref.watch(weeklyCountsProvider);
+    final weeklySpent = ref.watch(weeklySpentProvider);
+    final sym = currencySymbol(ref.watch(settingsProvider).currency);
     final scheme = theme.colorScheme;
     final maxY =
         counts.fold(0, (a, b) => a > b ? a : b).toDouble();
+    final totalWeekSpent = weeklySpent.fold(0.0, (a, b) => a + b);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('This Week',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('This Week',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text('$sym${totalWeekSpent.toStringAsFixed(2)}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: scheme.error,
+                  )),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             'Total: ${counts.fold(0, (a, b) => a + b)} cigarettes',
@@ -309,10 +340,13 @@ class _MonthlyView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final counts = ref.watch(monthlyCountsProvider);
+    final monthlySpent = ref.watch(monthlySpentProvider);
+    final sym = currencySymbol(ref.watch(settingsProvider).currency);
     final scheme = theme.colorScheme;
     final maxY =
         counts.fold(0, (a, b) => a > b ? a : b).toDouble();
     final total = counts.fold(0, (a, b) => a + b);
+    final totalMonthSpent = monthlySpent.fold(0.0, (a, b) => a + b);
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -322,9 +356,19 @@ class _MonthlyView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Last 30 Days',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Last 30 Days',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text('$sym${totalMonthSpent.toStringAsFixed(2)}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: scheme.error,
+                  )),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             'Total: $total cigarettes  |  Avg: ${total > 0 ? (total / 30).toStringAsFixed(1) : "0"}/day',

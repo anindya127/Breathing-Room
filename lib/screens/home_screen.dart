@@ -312,17 +312,8 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const Spacer(),
                     FilledButton.tonalIcon(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).addNewPack();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                                'New pack added (${settings.cigarettesPerPack} cigs)'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
+                      onPressed: () => _showAddPackDialog(
+                          context, ref, settings, sym),
                       icon: const Icon(Icons.add),
                       label: const Text('Add Pack'),
                       style: FilledButton.styleFrom(
@@ -362,28 +353,8 @@ class HomeScreen extends ConsumerWidget {
             SmokeButton(
               onPressed: () {
                 if (settings.isPackEmpty) {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Pack is empty'),
-                      content: const Text(
-                          'Your current pack is empty. Add a new pack to continue tracking.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Cancel'),
-                        ),
-                        FilledButton(
-                          onPressed: () {
-                            ref.read(settingsProvider.notifier).addNewPack();
-                            Navigator.pop(ctx);
-                            ref.read(todayEntriesProvider.notifier).logSmoke();
-                          },
-                          child: const Text('Add Pack & Log'),
-                        ),
-                      ],
-                    ),
-                  );
+                  _showAddPackDialog(context, ref, settings, sym,
+                      logAfter: true);
                 } else {
                   ref.read(todayEntriesProvider.notifier).logSmoke();
                 }
@@ -392,6 +363,93 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 32),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAddPackDialog(
+    BuildContext context,
+    WidgetRef ref,
+    UserSettings settings,
+    String sym, {
+    bool logAfter = false,
+  }) {
+    final costCtrl = TextEditingController(
+      text: settings.packCost.toStringAsFixed(2),
+    );
+    final cigsCtrl = TextEditingController(
+      text: settings.cigarettesPerPack.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(logAfter ? 'Pack is empty' : 'Add New Pack'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (logAfter)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Text('Your current pack is empty. Add a new one.'),
+              ),
+            TextField(
+              controller: costCtrl,
+              decoration: InputDecoration(
+                labelText: 'Pack Cost',
+                prefixText: '$sym ',
+              ),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: cigsCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Cigarettes in Pack',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final cost = double.tryParse(costCtrl.text) ?? settings.packCost;
+              final cigs =
+                  int.tryParse(cigsCtrl.text) ?? settings.cigarettesPerPack;
+
+              if (cost <= 0 || cigs <= 0) return;
+
+              // Add pack with new cost and count in one operation
+              ref.read(settingsProvider.notifier).addNewPack(
+                    packCost: cost,
+                    cigarettesPerPack: cigs,
+                  );
+              Navigator.pop(ctx);
+
+              if (logAfter) {
+                // Small delay so settings update before logging
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  ref.read(todayEntriesProvider.notifier).logSmoke();
+                });
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                      'New pack added ($cigs cigs, $sym${cost.toStringAsFixed(2)})'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: Text(logAfter ? 'Add Pack & Log' : 'Add Pack'),
+          ),
+        ],
       ),
     );
   }

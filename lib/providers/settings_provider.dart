@@ -140,10 +140,14 @@ class SettingsNotifier extends Notifier<UserSettings> {
     await _save();
   }
 
-  /// Add a new pack.
-  Future<void> addNewPack() async {
+  /// Add a new pack with optional new cost and count.
+  Future<void> addNewPack({double? packCost, int? cigarettesPerPack}) async {
+    final newCost = packCost ?? state.packCost;
+    final newCigs = cigarettesPerPack ?? state.cigarettesPerPack;
     state = state.copyWith(
-      packRemaining: state.packRemaining + state.cigarettesPerPack,
+      packCost: newCost,
+      cigarettesPerPack: newCigs,
+      packRemaining: state.packRemaining + newCigs,
       totalPacks: state.totalPacks + 1,
     );
     await _save();
