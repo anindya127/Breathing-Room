@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/anindya127/Breathing-Room/releases/latest/download/Breathing-Room-v1.0.0.apk">
-    <img src="https://img.shields.io/badge/Download%20APK-v1.0.0-brightgreen?style=for-the-badge&logo=android" alt="Download APK">
+  <a href="https://github.com/anindya127/Breathing-Room/releases/latest/download/Breathing-Room-v1.1.0.apk">
+    <img src="https://img.shields.io/badge/Download%20APK-v1.1.0-brightgreen?style=for-the-badge&logo=android" alt="Download APK">
   </a>
   <a href="https://github.com/anindya127/Breathing-Room/releases">
     <img src="https://img.shields.io/github/v/release/anindya127/Breathing-Room?style=for-the-badge" alt="Release">
