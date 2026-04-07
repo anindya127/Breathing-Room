@@ -10,11 +10,31 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/anindya127/Breathing-Room/releases/latest/download/Breathing-Room-v1.0.0.apk">
+    <img src="https://img.shields.io/badge/Download%20APK-v1.0.0-brightgreen?style=for-the-badge&logo=android" alt="Download APK">
+  </a>
   <a href="https://github.com/anindya127/Breathing-Room/releases">
     <img src="https://img.shields.io/github/v/release/anindya127/Breathing-Room?style=for-the-badge" alt="Release">
   </a>
   <img src="https://img.shields.io/badge/platform-Android%2013%2B-brightgreen?style=for-the-badge&logo=android" alt="Platform">
   <img src="https://img.shields.io/badge/built%20with-Flutter-02569B?style=for-the-badge&logo=flutter" alt="Flutter">
+</p>
+
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/home_simple.jpg" width="180" alt="Home - Simple Counter">
+  <img src="screenshots/home_coach.jpg" width="180" alt="Home - Coach Mode">
+  <img src="screenshots/stats_daily.jpg" width="180" alt="Statistics">
+  <img src="screenshots/wallet_coach.jpg" width="180" alt="Wallet">
+</p>
+
+<p align="center">
+  <img src="screenshots/trophies.jpg" width="180" alt="Trophy Room">
+  <img src="screenshots/path.jpg" width="180" alt="Non-Smoker Path">
+  <img src="screenshots/wallet_simple.jpg" width="180" alt="Wallet - Simple Mode">
 </p>
 
 ---
@@ -51,7 +71,7 @@
 ### Additional
 - Light, Dark, and System theme modes.
 - Haptic feedback and smooth animations.
-- All data stored locally on your device.
+- All data stored locally on your device -- your privacy is respected.
 
 ## Tech Stack
 
