@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../models/user_settings.dart';
 import '../providers/analytics_provider.dart';
 import '../providers/coach_provider.dart';
+import 'widgets/plan_sheet.dart';
 import '../providers/settings_provider.dart';
 import '../providers/smoke_provider.dart';
 import 'widgets/animated_count.dart';
@@ -31,6 +32,7 @@ class HomeScreen extends ConsumerWidget {
     final isOver = ref.watch(isOverLimitProvider);
     final isNear = ref.watch(isNearLimitProvider);
     final moneySaved = ref.watch(todayMoneySavedProvider);
+    final nextStep = ref.watch(nextStepProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -159,6 +161,30 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       IconGrid(total: limit, smoked: todayCount),
+                      if (nextStep != null) ...[
+                        const SizedBox(height: 10),
+                        InkWell(
+                          onTap: () => PlanSheet.show(context),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                nextStep.label,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.chevron_right,
+                                size: 14,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
